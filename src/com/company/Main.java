@@ -139,7 +139,7 @@ public class Main {
     //Tests to ensure that functions are working
     public static boolean verificationTests() {
         long recurResult, cacheResult, loopResult, matrixResult;
-        for (long x = 0; x < 10; x++) {
+        for (long x = 0; x < 50; x++) {
             //Testing recursive function
             recurResult = fibRecur(x);
             System.out.printf("%d element in Fibonacci sequence is %d \t", x, recurResult);
