@@ -5,7 +5,8 @@ import java.lang.management.ThreadMXBean;
 
 public class Main {
 
-    //Natural Fibonacci function
+    //"Natural" Fibonacci function
+    //Calls itself recursively on x-1 and x-2
     public static long fibRecur(long x) {
         //If we have reached "the bottom", return 0 or 1
         if (x == 0 || x == 1) {
@@ -20,16 +21,17 @@ public class Main {
     public static long fibCache(long x) {
         //Creating a table to hold previously calculated numbers
         long[] lookupTable = new long[(int) x + 1];
+        //Calling "helper" function to actually calculate Fibonacci number
         return fibCacheHelper(x, lookupTable);
     }
 
     //Fibonacci cache function helper function
     //Takes the index of the number we are trying to find and a table that will store elements in the sequence
     public static long fibCacheHelper(long x, long[] table) {
-        //If we are "at the bottom"
+        //If we are "at the bottom" - the lowest elements
         if (x == 0 || x == 1) {
             return x;
-            //If the number at the index has already been calculated
+            //If the number at the index has already been calculated, retrieve it from the table
         } else if (table[(int) x] != 0) {
             return table[(int) x];
             //If the number at the index has not been calculated, calculate it and add to the table
@@ -60,7 +62,7 @@ public class Main {
     }
 
     //Matrix multiplication function
-    public static long[][] matrixMul(long[][] matrixOne, long[][] matrixTwo, int oneCols, int oneRows, int twoCols, int twoRows) {
+    public static long[][] matrixMul(long[][] matrixOne, long[][] matrixTwo, int oneRows, int oneCols, int twoRows, int twoCols) {
         //Creating a new matrix to store our results
         long[][] resultMatrix = new long[oneRows][twoCols];
         long result;
@@ -99,7 +101,7 @@ public class Main {
 
     //Fibonacci sequence function based on matrices
     public static long fibMatrix(long x) {
-//This matrix will store our "powers" as we calculate them
+        //This matrix will store our "powers" as we calculate them
         long[][] powerMatrix = {{1, 1},
                 {1, 0}};
         //This matrix will store our final result matrix
@@ -109,13 +111,15 @@ public class Main {
         //We only need to iterate to matrix "power" number - 2
         //This is because the first value of the sequence is 0 and the second value is 1, so we can't technically
         //perform a matrix multiplication for those two "powers" and thus the sequence of matrix powers starts at
-        //index 3 with "M to the second"
+        //index 3 with "M to the first"
         long y = x - 2;
         //Return 0 if number equals 0
         if (x == 0) {
             return x;
             //Otherwise, iterate over "binary digits" of num to find result matrix
         } else {
+            //If x is index 1 or 2, we skip this part and simply return the top left corner of the result matrix
+            //which is one
             while (y > 0) {
                 //If "binary" digit at lowest position is equal to 1
                 if ((y % 2) == 1) {
@@ -136,16 +140,22 @@ public class Main {
     public static boolean verificationTests() {
         long recurResult, cacheResult, loopResult, matrixResult;
         for (long x = 0; x < 10; x++) {
+            //Testing recursive function
             recurResult = fibRecur(x);
             System.out.printf("%d element in Fibonacci sequence is %d \t", x, recurResult);
+            //Testing cache function
             cacheResult = fibCache(x);
             System.out.printf("%d \t", cacheResult);
+            //Testing loop function
             loopResult = fibLoop(x);
             System.out.printf("%d \t", loopResult);
+            //Testing matrix function
             matrixResult = fibMatrix(x);
             System.out.printf("%d \n", matrixResult);
+            //If all results match
             if (recurResult == cacheResult && cacheResult == loopResult && loopResult == matrixResult) {
                 System.out.printf("Result for %d is correct! \n", x);
+                //Otherwise, we just exit the function
             } else {
                 return false;
             }
@@ -166,6 +176,7 @@ public class Main {
         return result;
     }
 
+    //Runs time tests on each function and prints out tables of the result
     public static void runTimeTests() {
         //Max time to run is 2 minutes
         long maxTime = 120000000000L;
@@ -175,6 +186,7 @@ public class Main {
         long[] loopTime = new long[92];
         long[] cacheTime = new long[92];
         long[] matrixTime = new long[92];
+        long finalRecurTime = 0;
 
         //Printing header row for recursive and loop function tables
         System.out.printf("%7s %85s \n", "Fib Recur", "Fib Loop");
@@ -187,13 +199,14 @@ public class Main {
         long result = 0;
         int N, x, y;
         int maxRecurLoops = 101;
+        int timesToLoop = 50000;
 
         //N is how many "bits" we have
-        for (N = 0; N < 10; N++) {
+        for (N = 1; N < 10; N++) {
             //X is what "index" of the fibonacci sequence we are finding
-            for (x = (int) Math.pow(2, (double) N - 1); x < Math.pow(2, (double) N) && x < 93; x++) {
+            for (x = (int) Math.pow(2, (double) N - 1); x < Math.pow(2, (double) N) && x < 92; x++) {
                 //We only run the recur function until it surpasses the 2-minute mark
-                if (x == 0 || recurTime[x - 1] < maxTime) {
+                if (finalRecurTime < maxTime) {
                     //Setting the number of loops by what number of the sequence we are at
                     if (x % 10 == 0 && x > 0) {
                         maxRecurLoops = maxRecurLoops - 20;
@@ -207,8 +220,10 @@ public class Main {
                         //Updating appropriate place in "time" array
                         recurTime[x] = recurTime[x] + afterTime - beforeTime;
                     }
+
                     //Calculating average time
                     recurTime[x] = recurTime[x] / maxRecurLoops;
+                    finalRecurTime = recurTime[x];
                     System.out.printf("%7d %15d %31d %15d ", N, x, result, recurTime[x]);
 
                     //Only print doubling ratios for even numbers
@@ -223,8 +238,8 @@ public class Main {
                     System.out.printf("%7s %15s %31s %15s %15s %15s ", "na", "na", "na", "na", "na", "na", "na");
                 }
 
-                //Performing loop function 20 times and taking average
-                for (y = 0; y < 100; y++) {
+                //Performing loop function multiple times and taking average for fibLoop
+                for (y = 0; y < timesToLoop; y++) {
                     beforeTime = getCpuTime();
                     result = fibLoop(x);
                     afterTime = getCpuTime();
@@ -233,7 +248,7 @@ public class Main {
                 }
 
                 //Calculating average time
-                loopTime[x] = loopTime[x] / 20;
+                loopTime[x] = loopTime[x] / timesToLoop;
                 System.out.printf("%7d %15d %31d %15d ", N, x, result, loopTime[x]);
 
                 //Only printing ratios if x is even
@@ -249,19 +264,19 @@ public class Main {
 
         //Printing header row for fibonacci cache and fibonacci matrix functions
         System.out.printf("%7s %87s \n", "Fib Cache", "Fib Matrix");
-        System.out.printf("%7s %15s %15s %15s %15s %15s", "N", "X", "Fib(x)", "Time", "Doubling", "Expected");
-        System.out.printf("%7s %15s %15s %15s %15s %15s \n", "N", "X", "Fib(x)", "Time", "Doubling", "Expected");
-        System.out.printf("%71s %15s", "Ratio", "Doubling");
-        System.out.printf("%71s %15s \n", "Ratio", "Doubling");
-        System.out.printf("%87s", "Ratio");
-        System.out.printf("%87s\n", "Ratio");
+        System.out.printf("%7s %15s %31s %15s %15s %15s", "N", "X", "Fib(x)", "Time", "Doubling", "Expected");
+        System.out.printf("%7s %15s %31s %15s %15s %15s \n", "N", "X", "Fib(x)", "Time", "Doubling", "Expected");
+        System.out.printf("%87s %15s", "Ratio", "Doubling");
+        System.out.printf("%87s %15s \n", "Ratio", "Doubling");
+        System.out.printf("%101s", "Ratio");
+        System.out.printf("%101s\n", "Ratio");
 
         //N is the number of "bits"
-        for (N = 1; N < 32; N++) {
+        for (N = 1; N < 10; N++) {
             //x is the element of the Fibonacci sequence that we are finding
-            for (x = (int) Math.pow(2, (double) N - 1); x < Math.pow(2, (double) N) - 1 && x < 93; x++) {
-                //Running cache function 20 times
-                for (y = 0; y < 20; y++) {
+            for (x = (int) Math.pow(2, (double) N - 1); x < Math.pow(2, (double) N) && x < 92; x++) {
+                //Running cache function many times
+                for (y = 0; y < timesToLoop; y++) {
                     beforeTime = getCpuTime();
                     result = fibCache(x);
                     afterTime = getCpuTime();
@@ -269,18 +284,18 @@ public class Main {
                 }
 
                 //Calculating average time
-                cacheTime[x] = cacheTime[x] / 20;
+                cacheTime[x] = cacheTime[x] / timesToLoop;
                 System.out.printf("%7d %15d %31d %15d ", N, x, result, cacheTime[x],
                         (float) cacheTime[x] / (afterTime - beforeTime), Math.pow(2, (x / 2)) / Math.pow(2, ((x - 1) / 2)));
                 if (x % 2 == 0 && x != 0) {
                     //Time complexity is linear, so our expected doubling ratio will be x/(x/2) or 2
-                    System.out.printf("%15.3f %15.3f ", (float) cacheTime[x] / cacheTime[x / 2], x / (x / 2));
+                    System.out.printf("%15.3f %15d ", (float) cacheTime[x] / cacheTime[x / 2], 2);
                 } else {
                     System.out.printf("%15s %15s ", "na", "na");
                 }
 
-                //Running matrix function 20 times
-                for (y = 0; y < 20; y++) {
+                //Running matrix function multiple times
+                for (y = 0; y < timesToLoop; y++) {
                     beforeTime = getCpuTime();
                     result = fibMatrix(x);
                     afterTime = getCpuTime();
@@ -288,7 +303,7 @@ public class Main {
                 }
 
                 //Calculating average time
-                matrixTime[x] = matrixTime[x] / 20;
+                matrixTime[x] = matrixTime[x] / timesToLoop;
                 System.out.printf("%7d %15d %31d %15d ", N, x, result, matrixTime[x]);
                 //Don't print doubling ratios unless x is divisible by 2
                 if (x % 2 == 0 && x != 0) {
